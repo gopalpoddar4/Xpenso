@@ -51,6 +51,7 @@ class TransactionDetailsFragment : Fragment() {
             binding.amount.text = "$ ${it.amount}"
             binding.date.text = it.date
             binding.note.text = it.note
+            binding.category.text = it.category
         },{
             Toast.makeText(requireContext(),it,Toast.LENGTH_SHORT).show()
         })

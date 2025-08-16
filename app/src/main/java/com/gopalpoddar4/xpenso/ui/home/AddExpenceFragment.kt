@@ -5,6 +5,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
@@ -20,6 +21,7 @@ class AddExpenceFragment : Fragment() {
     private var _binding: FragmentAddExpenceBinding?=null
     private val binding get() = _binding!!
     private lateinit var mainViewModel: MainViewModel
+    private lateinit var selectedCategory: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,6 +51,31 @@ class AddExpenceFragment : Fragment() {
         binding.backAddExpence.setOnClickListener {
             findNavController().navigateUp()
         }
+
+        val list = listOf(
+            "Food",
+            "Travel",
+            "Shopping",
+            "Entertainment",
+            "Bills",
+            "Health",
+            "Education",
+            "Groceries",
+            "Fuel",
+            "Rent",
+            "Saving",
+            "Investments",
+            "Miscellaneous",
+        )
+
+        val selectCategoryAdapter = ArrayAdapter(requireContext(),R.layout.aotucomplete_textview_bg,list)
+        binding.selectCategory.setAdapter(selectCategoryAdapter)
+
+        binding.selectCategory.setOnItemClickListener { adapterView, view, position, l ->
+            selectedCategory = list[position].toString()
+        }
+
+
         binding.addExpenceBtn.setOnClickListener {
             addExpense()
         }
@@ -62,7 +89,7 @@ class AddExpenceFragment : Fragment() {
         if (name.isNotEmpty() && amount.isNotEmpty() && date.isNotEmpty()){
             val amount1  = amount.toDouble()
 
-            mainViewModel.addExpense(name,date,amount1,description,{
+            mainViewModel.addExpense(name,date,amount1,description,selectedCategory,{
                 Toast.makeText(context,"Expense Added", Toast.LENGTH_SHORT).show()
                 findNavController().navigateUp()
 

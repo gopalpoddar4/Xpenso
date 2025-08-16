@@ -1,5 +1,7 @@
 package com.gopalpoddar4.xpenso.ui.home
 
+import android.content.Context.MODE_PRIVATE
+import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -8,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.firebase.auth.FirebaseAuth
@@ -17,7 +20,10 @@ import com.gopalpoddar4.xpenso.data.ExpenceModel
 import com.gopalpoddar4.xpenso.data.TransationAdapter
 import com.gopalpoddar4.xpenso.databinding.FragmentHomeBinding
 import com.gopalpoddar4.xpenso.databinding.FragmentLoginBinding
+import com.gopalpoddar4.xpenso.utility.InternetCheck
 import com.gopalpoddar4.xpenso.viewmodel.MainViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
@@ -30,6 +36,7 @@ class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding?=null
     private val binding get() = _binding!!
     private lateinit var mainViewModel: MainViewModel
+    private lateinit var sharedPref: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,8 +55,14 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+
+        if (!InternetCheck.isInternetAvailable(this)){
+            InternetCheck.showEnableInternetDialog(this)
+        }
+
         mainViewModel = ViewModelProvider(this)[MainViewModel::class.java]
 
+        sharedPref = requireActivity().getSharedPreferences("data", MODE_PRIVATE)
         activity?.window?.navigationBarColor = ContextCompat.getColor(requireContext(), R.color.background)
 
         val today = LocalDate.now()
@@ -66,17 +79,20 @@ class HomeFragment : Fragment() {
         greating()
 
         val uid = FirebaseAuth.getInstance().currentUser?.uid.toString()
-        val db = FirebaseDatabase.getInstance().reference
 
-        binding.transactionHistoryRcv.layoutManager = LinearLayoutManager(requireContext())
-
-        uid.let {
-            db.child("xpenso").child("users").child(it).get()
-                .addOnSuccessListener { data ->
-                    fullName = data.child("name").value.toString()
-                    binding.name.text = fullName
-                }
+        if (sharedPref.getBoolean("newUser",false)){
+            mainViewModel.getUserFirestore(uid,{UserData->
+                sharedPref.edit().putString("name",UserData?.name).apply()
+                sharedPref.edit().putString("email",UserData?.email).apply()
+            })
+            viewLifecycleOwner.lifecycleScope.launch {
+                delay(2000)
+                sharedPref.edit().putBoolean("newUser",false).apply()
+            }
         }
+
+        binding.name.text = sharedPref.getString("name","User")
+        binding.transactionHistoryRcv.layoutManager = LinearLayoutManager(requireContext())
 
         binding.addExpenceBtn.setOnClickListener {
             findNavController().navigate(R.id.action_homeFragment_to_addExpenceFragment)

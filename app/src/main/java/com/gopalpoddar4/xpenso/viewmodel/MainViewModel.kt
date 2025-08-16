@@ -9,7 +9,9 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.database
+import com.google.firebase.firestore.FirebaseFirestore
 import com.gopalpoddar4.xpenso.data.ExpenceModel
+import com.gopalpoddar4.xpenso.data.UserModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlin.math.exp
@@ -19,7 +21,7 @@ class MainViewModel : ViewModel(){
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private lateinit var database: DatabaseReference
 
-    fun addExpense(name: String,date: String,amount: Double,desc: String,onTaskSuccess:()->Unit,onTaskFailed:(String)->Unit){
+    fun addExpense(name: String,date: String,amount: Double,desc: String,category:String,onTaskSuccess:()->Unit,onTaskFailed:(String)->Unit){
 
         val uid = auth.currentUser?.uid
         database = Firebase.database.reference
@@ -31,7 +33,7 @@ class MainViewModel : ViewModel(){
         val expenseKey: String =
             database.child("xpenso").child("users").child(uid.toString()).child("expense").push().key.toString()
 
-        val expenseModel = ExpenceModel(name=name, date = date, amount = amount, id = expenseKey, note = desc, month = formateMonth)
+        val expenseModel = ExpenceModel(name=name, date = date, amount = amount, id = expenseKey, note = desc, month = formateMonth, category = category)
 
         database.child("xpenso").child("users").child(uid.toString()).child("expense").child(expenseKey).setValue(expenseModel)
             .addOnCompleteListener {
@@ -62,34 +64,14 @@ class MainViewModel : ViewModel(){
                         expenseList.add(it)
                     }
                 }
-
-                val reversList= expenseList.reversed()
-                expenseList(reversList as MutableList<ExpenceModel>)
-
+                val reversList= expenseList.reversed().toMutableList()
+                expenseList(reversList)
             }
-
             override fun onCancelled(error: DatabaseError) {
                 onTaskFailed(error.message.toString())
             }
 
         })
-
-
-    }
-
-    fun updateExpense(name: String,date: String,amount: Double,desc: String,id:String,onTaskSuccess:()->Unit,onTaskFailed:(String)->Unit){
-        val uid = auth.currentUser?.uid
-        val expenseModel = ExpenceModel(name = name, id = id, date = date, amount = amount, note = desc)
-        database = Firebase.database.getReference("xpenso/users/$uid/expense/$id")
-
-        database.setValue(expenseModel)
-            .addOnCompleteListener {
-                onTaskSuccess()
-            }
-            .addOnFailureListener {
-                onTaskFailed(it.message.toString())
-
-            }
     }
 
     fun getExpenseById(id: String, onTaskSuccess: (ExpenceModel) -> Unit, onTaskFailed: (String) -> Unit){
@@ -117,4 +99,21 @@ class MainViewModel : ViewModel(){
                 onTaskSuccess()
             }
     }
+
+    fun getUserFirestore(userId:String,callBack:(UserModel?)-> Unit){
+        val db = FirebaseFirestore.getInstance()
+        db.collection("users")
+            .document(userId)
+            .get()
+            .addOnSuccessListener { document->
+                if (document.exists()){
+                    val user = document.toObject(UserModel::class.java)
+                    callBack(user)
+                }
+            }
+            .addOnFailureListener {
+                callBack(null)
+            }
+    }
+
 }

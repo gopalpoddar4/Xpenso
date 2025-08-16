@@ -1,5 +1,7 @@
 package com.gopalpoddar4.xpenso.ui.auth
 
+import android.content.Context.MODE_PRIVATE
+import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -20,6 +22,7 @@ class LoginFragment : Fragment() {
     private var _binding: FragmentLoginBinding?=null
     private val binding get() = _binding!!
     private lateinit var authViewModel: AuthViewModel
+    private lateinit var sharedPref: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,7 +41,10 @@ class LoginFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        sharedPref = requireActivity().getSharedPreferences("data", MODE_PRIVATE)
+        sharedPref.edit().putBoolean("newUser",true).apply()
         authViewModel = ViewModelProvider(this)[AuthViewModel::class.java]
+
 
         activity?.window?.navigationBarColor = ContextCompat.getColor(requireContext(), R.color.background)
 

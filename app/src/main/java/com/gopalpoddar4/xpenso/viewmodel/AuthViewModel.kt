@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.firestore.FirebaseFirestore
 import com.gopalpoddar4.xpenso.data.UserModel
 import kotlinx.coroutines.launch
 
@@ -17,7 +18,8 @@ class AuthViewModel: ViewModel() {
                 .addOnSuccessListener {result->
                     val uid = result.user?.uid
                     if (uid!=null){
-                        createUserInDatabase(name,email,uid,onSuccessCreation,onFailedCreation)
+                        createUserInFirestore(name,email,uid,onSuccessCreation, onFailedCreation)
+                        createUserInDatabase(name,email,uid)
                     }
                 }
                 .addOnFailureListener { result->
@@ -43,18 +45,34 @@ class AuthViewModel: ViewModel() {
         }
     }
 
-    fun createUserInDatabase(name: String,email: String,uid: String,onSuccessLogin:()->Unit,onFailedLogin:(String)->Unit){
+    fun createUserInDatabase(name: String,email: String,uid: String){
         val user = UserModel(name,email)
 
         val dbRef = FirebaseDatabase.getInstance().reference
 
         dbRef.child("xpenso").child("users").child(uid).setValue(user)
             .addOnSuccessListener {
-                onSuccessLogin()
+
             }
             .addOnFailureListener {
-                onFailedLogin(it.message.toString())
+
             }
 
     }
+
+    fun createUserInFirestore(name: String,email: String,uid: String,onSuccessTask:()->Unit,onFailedTask:(String)->Unit){
+        val user = UserModel(name,email)
+        val db = FirebaseFirestore.getInstance()
+        db.collection("users")
+            .document(uid)
+            .set(user)
+            .addOnSuccessListener {
+                onSuccessTask()
+            }
+            .addOnFailureListener {
+                onFailedTask(it.message.toString())
+            }
+    }
+
+
 }
