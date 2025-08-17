@@ -42,7 +42,7 @@ class ProfileFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val uid = FirebaseAuth.getInstance().currentUser?.uid.toString()
+
         sharedPref = requireActivity().getSharedPreferences("data", MODE_PRIVATE)
 
         binding.userName.text = sharedPref.getString("name","user")

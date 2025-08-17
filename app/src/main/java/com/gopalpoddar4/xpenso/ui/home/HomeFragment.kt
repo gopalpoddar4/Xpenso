@@ -32,7 +32,6 @@ import java.util.Locale
 
 class HomeFragment : Fragment() {
 
-    private lateinit var fullName: String
     private var _binding: FragmentHomeBinding?=null
     private val binding get() = _binding!!
     private lateinit var mainViewModel: MainViewModel
