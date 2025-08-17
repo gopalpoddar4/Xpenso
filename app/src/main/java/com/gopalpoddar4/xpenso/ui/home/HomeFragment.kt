@@ -112,10 +112,17 @@ class HomeFragment : Fragment() {
             binding.progressBarHome.visibility = View.GONE
             val todayExpense = expenseList.filter { list-> list.date == formateToday }
 
-            binding.transactionHistoryRcv.adapter = TransationAdapter(todayExpense,{
-                val action = HomeFragmentDirections.actionHomeFragmentToTransactionDetailsFragment(it)
-                findNavController().navigate(action)
-            })
+            if (todayExpense.isEmpty()) {
+                binding.transactionHistoryRcv.visibility = View.GONE
+                binding.noExpenseAddedTxt.visibility = View.VISIBLE
+            }else{
+                binding.transactionHistoryRcv.visibility = View.VISIBLE
+                binding.noExpenseAddedTxt.visibility = View.GONE
+                binding.transactionHistoryRcv.adapter = TransationAdapter(todayExpense,{
+                    val action = HomeFragmentDirections.actionHomeFragmentToTransactionDetailsFragment(it)
+                    findNavController().navigate(action)
+                })
+            }
 
             val totalAmount = todayExpense.sumOf { it.amount?:0.0 }
             binding.todaysExpense.text = "$ $totalAmount"
